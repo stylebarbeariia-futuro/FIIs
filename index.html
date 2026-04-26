@@ -355,7 +355,7 @@
 
 <footer>Projeto Aposentadoria &nbsp;·&nbsp; <span>FIIs</span> &nbsp;·&nbsp; Dados salvos localmente</footer>
 
-<script>
+<script type="module">
 // ═══════════════════════════════════════════════
 // DADOS BASE
 // ═══════════════════════════════════════════════
@@ -935,11 +935,104 @@ function renderAll(){
 }
 
 // ═══════════════════════════════════════════════
+// FIREBASE — SINCRONIZAÇÃO
+// ═══════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDYQQhh_rh42b23Fv4E1aFg6eig8PM6-i4",
+  authDomain: "projeto-aposentadoria.firebaseapp.com",
+  projectId: "projeto-aposentadoria",
+  storageBucket: "projeto-aposentadoria.firebasestorage.app",
+  messagingSenderId: "131510448136",
+  appId: "1:131510448136:web:c12092d81c4322e573a1bd"
+};
+
+const fbApp  = initializeApp(firebaseConfig);
+const db     = getFirestore(fbApp);
+const DOC_ID = 'carteira-fiis';
+
+// Salva no Firestore (substitui o save() local)
+async function saveToCloud() {
+  try {
+    await setDoc(doc(db, 'dados', DOC_ID), {
+      aportes:    JSON.stringify(aportes),
+      provs:      JSON.stringify(provs),
+      marketData: JSON.stringify(marketData),
+      updatedAt:  new Date().toISOString()
+    });
+  } catch(e) {
+    console.warn('Erro ao salvar na nuvem:', e);
+  }
+}
+
+// Sobrescreve save() para salvar local + nuvem
+const _saveLocal = save;
+function save() {
+  _saveLocal();
+  saveToCloud();
+}
+
+// Escuta mudanças em tempo real — sincroniza entre dispositivos
+function startSync() {
+  onSnapshot(doc(db, 'dados', DOC_ID), (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const cloudAportes = JSON.parse(data.aportes || '[]');
+    const cloudProvs   = JSON.parse(data.provs   || '{}');
+    const cloudMkt     = JSON.parse(data.marketData || '{}');
+
+    // só atualiza se for diferente do que está local
+    if (JSON.stringify(cloudAportes) !== JSON.stringify(aportes) ||
+        JSON.stringify(cloudProvs)   !== JSON.stringify(provs)   ||
+        JSON.stringify(cloudMkt)     !== JSON.stringify(marketData)) {
+      aportes    = cloudAportes;
+      provs      = cloudProvs;
+      marketData = cloudMkt;
+      localStorage.setItem('fii_aportes', JSON.stringify(aportes));
+      localStorage.setItem('fii_provs',   JSON.stringify(provs));
+      localStorage.setItem('fii_market',  JSON.stringify(marketData));
+      renderAll();
+      showToast('☁️ Dados sincronizados!');
+    }
+  });
+}
+
+// Carrega dados da nuvem na abertura
+async function loadFromCloud() {
+  try {
+    const snap = await getDoc(doc(db, 'dados', DOC_ID));
+    if (snap.exists()) {
+      const data = snap.data();
+      aportes    = JSON.parse(data.aportes    || '[]');
+      provs      = JSON.parse(data.provs      || '{}');
+      marketData = JSON.parse(data.marketData || '{}');
+      localStorage.setItem('fii_aportes', JSON.stringify(aportes));
+      localStorage.setItem('fii_provs',   JSON.stringify(provs));
+      localStorage.setItem('fii_market',  JSON.stringify(marketData));
+    } else {
+      // primeira vez: sobe dados locais para nuvem
+      await saveToCloud();
+    }
+  } catch(e) {
+    console.warn('Erro ao carregar da nuvem:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
 buildSelects();
 renderAll();
 initCollapsibles();
+
+// inicia Firebase
+loadFromCloud().then(() => {
+  renderAll();
+  startSync();
+  document.getElementById('update-sub').textContent += ' · ☁️ Sincronizado';
+});
 </script>
 </body>
 </html>
