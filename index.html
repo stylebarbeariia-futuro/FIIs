@@ -1005,14 +1005,23 @@ async function loadFromCloud() {
     const snap = await getDoc(doc(db, 'dados', DOC_ID));
     if (snap.exists()) {
       const data = snap.data();
-      aportes    = JSON.parse(data.aportes    || '[]');
-      provs      = JSON.parse(data.provs      || '{}');
-      marketData = JSON.parse(data.marketData || '{}');
-      localStorage.setItem('fii_aportes', JSON.stringify(aportes));
-      localStorage.setItem('fii_provs',   JSON.stringify(provs));
-      localStorage.setItem('fii_market',  JSON.stringify(marketData));
+      const cloudAportes = JSON.parse(data.aportes    || '[]');
+      const cloudProvs   = JSON.parse(data.provs      || '{}');
+      const cloudMkt     = JSON.parse(data.marketData || '{}');
+      // só usa nuvem se tiver dados reais
+      if (cloudAportes.length > 0 || Object.keys(cloudProvs).length > 0) {
+        aportes    = cloudAportes;
+        provs      = cloudProvs;
+        marketData = cloudMkt;
+        localStorage.setItem('fii_aportes', JSON.stringify(aportes));
+        localStorage.setItem('fii_provs',   JSON.stringify(provs));
+        localStorage.setItem('fii_market',  JSON.stringify(marketData));
+      } else {
+        // nuvem vazia — sobe dados base
+        await saveToCloud();
+      }
     } else {
-      // primeira vez: sobe dados locais para nuvem
+      // documento não existe — sobe dados base
       await saveToCloud();
     }
   } catch(e) {
