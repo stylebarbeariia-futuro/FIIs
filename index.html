@@ -355,7 +355,7 @@
 
 <footer>Projeto Aposentadoria &nbsp;·&nbsp; <span>FIIs</span> &nbsp;·&nbsp; Dados salvos localmente</footer>
 
-<script type="module">
+<script>
 // ═══════════════════════════════════════════════
 // DADOS BASE
 // ═══════════════════════════════════════════════
@@ -376,14 +376,14 @@ function resetAndReload() {
   location.reload();
 }
 
-// CARTEIRA BASE — atualizada em 06/04/2026
+// CARTEIRA BASE — atualizada em 27/04/2026
 const CARTEIRA_BASE = {
   HGLG11: { qty: 24,  avgPrice: 155.06 },
-  MXRF11: { qty: 500, avgPrice: 9.62   },
+  MXRF11: { qty: 532, avgPrice: 9.64   },
   XPML11: { qty: 24,  avgPrice: 101.94 },
-  RZAG11: { qty: 552, avgPrice: 9.06   },
+  RZAG11: { qty: 687, avgPrice: 9.09   },
   KNRI11: { qty: 8,   avgPrice: 142.95 },
-  KNCR11: { qty: 52,  avgPrice: 105.52 },
+  KNCR11: { qty: 62,  avgPrice: 105.70 },
   RBRR11: { qty: 19,  avgPrice: 88.66  },
   DEVA11: { qty: 35,  avgPrice: 27.40  },
   BTLG11: { qty: 31,  avgPrice: 102.18 },
@@ -392,12 +392,10 @@ const CARTEIRA_BASE = {
   KNSC11: { qty: 202, avgPrice: 8.98   },
 };
 
-// Aportes NOVOS feitos após mar/26
-const APORTES_INICIAIS = [
-  {id:'a1', date:'2026-04-06', fii:'RZAG11', qty:135, price:9.04},
-];
+// Aportes NOVOS feitos após 27/04/2026 — adicione aqui
+const APORTES_INICIAIS = [];
 
-// Proventos históricos completos (set/25 até mar/26 das fotos)
+// Proventos históricos completos
 const PROV_INICIAIS = {
   '2025-09': {
     HGLG11:{cota:3.30, total:16.50},
@@ -409,7 +407,6 @@ const PROV_INICIAIS = {
     RBRR11:{cota:1.87, total:18.70},
     DEVA11:{cota:1.24, total:10.88},
     BTLG11:{cota:0.63, total:6.32},
-    VINO11:{cota:0.00, total:0.00},
   },
   '2025-10': {
     HGLG11:{cota:3.30, total:16.50},
@@ -421,7 +418,6 @@ const PROV_INICIAIS = {
     RBRR11:{cota:1.10, total:17.60},
     DEVA11:{cota:2.65, total:23.10},
     BTLG11:{cota:1.42, total:14.22},
-    RZTR11:{cota:2.00, total:6.00},
     VINO11:{cota:0.00, total:0.00},
   },
   '2025-11': {
@@ -434,7 +430,6 @@ const PROV_INICIAIS = {
     RBRR11:{cota:0.96, total:15.40},
     DEVA11:{cota:2.49, total:21.78},
     BTLG11:{cota:1.42, total:14.22},
-    RZTR11:{cota:2.00, total:6.00},
     VINO11:{cota:0.05, total:0.40},
   },
   '2025-12': {
@@ -447,7 +442,6 @@ const PROV_INICIAIS = {
     RBRR11:{cota:1.10, total:17.60},
     DEVA11:{cota:3.32, total:29.04},
     BTLG11:{cota:1.22, total:18.17},
-    RZTR11:{cota:2.00, total:6.00},
     VINO11:{cota:0.05, total:0.40},
   },
   '2026-01': {
@@ -460,7 +454,6 @@ const PROV_INICIAIS = {
     RBRR11:{cota:1.10, total:17.60},
     DEVA11:{cota:3.16, total:26.40},
     BTLG11:{cota:1.22, total:18.17},
-    RZTR11:{cota:3.00, total:9.00},
     VINO11:{cota:0.05, total:0.40},
   },
   '2026-02': {
@@ -473,7 +466,6 @@ const PROV_INICIAIS = {
     RBRR11:{cota:1.40, total:22.40},
     DEVA11:{cota:3.16, total:27.60},
     BTLG11:{cota:1.22, total:18.40},
-    RZTR11:{cota:3.00, total:9.00},
     VINO11:{cota:0.05, total:0.36},
     HCTR11:{cota:0.59, total:11.88},
   },
@@ -490,7 +482,21 @@ const PROV_INICIAIS = {
     VINO11:{cota:0.04,  total:0.32},
     HCTR11:{cota:0.26,  total:5.20},
     KNSC11:{cota:0.08,  total:16.16},
-  }
+  },
+  '2026-04': {
+    HGLG11:{cota:1.10,  total:26.40},
+    MXRF11:{cota:0.09,  total:47.50},
+    XPML11:{cota:0.92,  total:22.08},
+    RZAG11:{cota:0.10,  total:66.24},
+    KNRI11:{cota:1.10,  total:8.80},
+    KNCR11:{cota:1.00,  total:59.80},
+    RBRR11:{cota:1.03,  total:19.60},
+    DEVA11:{cota:0.30,  total:10.50},
+    BTLG11:{cota:0.81,  total:25.11},
+    VINO11:{cota:0.04,  total:0.32},
+    HCTR11:{cota:0.23,  total:4.60},
+    KNSC11:{cota:0.11,  total:22.22},
+  },
 };
 
 // ═══════════════════════════════════════════════
@@ -500,8 +506,8 @@ function loadAportes() {
   const saved = localStorage.getItem('fii_aportes');
   if (saved) {
     const parsed = JSON.parse(saved);
-    // limpa dados antigos que tinham aportes históricos
-    if (parsed.length > 5 && parsed.some(a => a.id && a.id.startsWith('i'))) {
+    // limpa dados antigos
+    if (parsed.some(a => a.id && a.id.startsWith('i'))) {
       localStorage.removeItem('fii_aportes');
       localStorage.setItem('fii_aportes', JSON.stringify(APORTES_INICIAIS));
       return APORTES_INICIAIS;
@@ -512,10 +518,16 @@ function loadAportes() {
   return APORTES_INICIAIS;
 }
 function loadProvs() {
+  // sempre usa os dados do código como base e mescla com os salvos
+  const base = JSON.parse(JSON.stringify(PROV_INICIAIS));
   const saved = localStorage.getItem('fii_provs');
-  if (saved) return JSON.parse(saved);
-  localStorage.setItem('fii_provs', JSON.stringify(PROV_INICIAIS));
-  return PROV_INICIAIS;
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    // mescla: dados salvos sobrescrevem os do código (permite lançamentos novos)
+    Object.entries(parsed).forEach(([k, v]) => { base[k] = v; });
+  }
+  localStorage.setItem('fii_provs', JSON.stringify(base));
+  return base;
 }
 
 let aportes    = loadAportes();
@@ -935,113 +947,11 @@ function renderAll(){
 }
 
 // ═══════════════════════════════════════════════
-// FIREBASE — SINCRONIZAÇÃO
-// ═══════════════════════════════════════════════
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDYQQhh_rh42b23Fv4E1aFg6eig8PM6-i4",
-  authDomain: "projeto-aposentadoria.firebaseapp.com",
-  projectId: "projeto-aposentadoria",
-  storageBucket: "projeto-aposentadoria.firebasestorage.app",
-  messagingSenderId: "131510448136",
-  appId: "1:131510448136:web:c12092d81c4322e573a1bd"
-};
-
-const fbApp  = initializeApp(firebaseConfig);
-const db     = getFirestore(fbApp);
-const DOC_ID = 'carteira-fiis';
-
-// Salva no Firestore (substitui o save() local)
-async function saveToCloud() {
-  try {
-    await setDoc(doc(db, 'dados', DOC_ID), {
-      aportes:    JSON.stringify(aportes),
-      provs:      JSON.stringify(provs),
-      marketData: JSON.stringify(marketData),
-      updatedAt:  new Date().toISOString()
-    });
-  } catch(e) {
-    console.warn('Erro ao salvar na nuvem:', e);
-  }
-}
-
-// Sobrescreve save() para salvar local + nuvem
-const _saveLocal = save;
-function save() {
-  _saveLocal();
-  saveToCloud();
-}
-
-// Escuta mudanças em tempo real — sincroniza entre dispositivos
-function startSync() {
-  onSnapshot(doc(db, 'dados', DOC_ID), (snap) => {
-    if (!snap.exists()) return;
-    const data = snap.data();
-    const cloudAportes = JSON.parse(data.aportes || '[]');
-    const cloudProvs   = JSON.parse(data.provs   || '{}');
-    const cloudMkt     = JSON.parse(data.marketData || '{}');
-
-    // só atualiza se for diferente do que está local
-    if (JSON.stringify(cloudAportes) !== JSON.stringify(aportes) ||
-        JSON.stringify(cloudProvs)   !== JSON.stringify(provs)   ||
-        JSON.stringify(cloudMkt)     !== JSON.stringify(marketData)) {
-      aportes    = cloudAportes;
-      provs      = cloudProvs;
-      marketData = cloudMkt;
-      localStorage.setItem('fii_aportes', JSON.stringify(aportes));
-      localStorage.setItem('fii_provs',   JSON.stringify(provs));
-      localStorage.setItem('fii_market',  JSON.stringify(marketData));
-      renderAll();
-      showToast('☁️ Dados sincronizados!');
-    }
-  });
-}
-
-// Carrega dados da nuvem na abertura
-async function loadFromCloud() {
-  try {
-    const snap = await getDoc(doc(db, 'dados', DOC_ID));
-    if (snap.exists()) {
-      const data = snap.data();
-      const cloudAportes = JSON.parse(data.aportes    || '[]');
-      const cloudProvs   = JSON.parse(data.provs      || '{}');
-      const cloudMkt     = JSON.parse(data.marketData || '{}');
-      // só usa nuvem se tiver dados reais
-      if (cloudAportes.length > 0 || Object.keys(cloudProvs).length > 0) {
-        aportes    = cloudAportes;
-        provs      = cloudProvs;
-        marketData = cloudMkt;
-        localStorage.setItem('fii_aportes', JSON.stringify(aportes));
-        localStorage.setItem('fii_provs',   JSON.stringify(provs));
-        localStorage.setItem('fii_market',  JSON.stringify(marketData));
-      } else {
-        // nuvem vazia — sobe dados base
-        await saveToCloud();
-      }
-    } else {
-      // documento não existe — sobe dados base
-      await saveToCloud();
-    }
-  } catch(e) {
-    console.warn('Erro ao carregar da nuvem:', e);
-  }
-}
-
-// ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
 buildSelects();
 renderAll();
 initCollapsibles();
-
-// inicia Firebase
-loadFromCloud().then(() => {
-  renderAll();
-  startSync();
-  document.getElementById('update-sub').textContent += ' · ☁️ Sincronizado';
-});
 </script>
 </body>
 </html>
